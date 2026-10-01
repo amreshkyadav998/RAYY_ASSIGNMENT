@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictInt
 
 
 class OrderItem(BaseModel):
@@ -10,6 +10,30 @@ class OrderItem(BaseModel):
     name: str
     unit_price_paise: int = Field(ge=0)
     quantity: int = Field(ge=1)
+
+
+class AppliedDiscount(BaseModel):
+    """Snapshot of a discount as it was applied to one order.
+
+    Everything needed to settle with the partner is copied here at apply time,
+    so later changes to the code (or to the partner's split) never alter it.
+    """
+
+    code: str
+    amount_paise: int = Field(ge=0)
+    percent_off_bps: int
+    cap_paise: int
+    partner_share_bps: int
+    rayy_share_bps: int
+    partner_share_paise: int = Field(ge=0)
+    rayy_share_paise: int = Field(ge=0)
+    applied_at: datetime
+
+
+class PaymentRecord(BaseModel):
+    payment_id: str
+    amount_paise: int
+    received_at: datetime
 
 
 class Order(BaseModel):
@@ -21,6 +45,22 @@ class Order(BaseModel):
     currency: str = "INR"
     status: str
     created_at: datetime
+    discount: AppliedDiscount | None = None
+    paid_at: datetime | None = None
+    payment: PaymentRecord | None = None
+
+
+class ApplyDiscountRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=64)
+
+
+class PaymentWebhook(BaseModel):
+    """Body of the gateway's ``payment.succeeded`` webhook (see app/gateway.py)."""
+
+    event: str
+    payment_id: str = Field(min_length=1)
+    order_id: str = Field(min_length=1)
+    amount_paise: StrictInt = Field(ge=0)
 
 
 class DiscountCode(BaseModel):

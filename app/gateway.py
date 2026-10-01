@@ -64,3 +64,12 @@ class StubGateway:
         body = self.webhook_body(payment)
         headers = {SIGNATURE_HEADER: self.sign(body), "Content-Type": "application/json"}
         return [(headers, body), (dict(headers), body)]
+
+
+def verify_signature(body: bytes, signature: str | None, secret: str | None = None) -> bool:
+    """Constant-time check of the ``X-Gateway-Signature`` header over the raw body."""
+    if not signature:
+        return False
+    secret = secret or settings.gateway_webhook_secret
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature.strip().lower())

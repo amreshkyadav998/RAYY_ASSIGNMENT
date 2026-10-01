@@ -1,0 +1,746 @@
+{
+  "info": {
+    "name": "RAYY partner discounts",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Reseed first (python -m app.seed) so orders are pending. Run requests in order, or use the Runner."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "secret",
+      "value": "whsec_local_dev_only"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Health & read",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "List orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orders"
+          }
+        },
+        {
+          "name": "Get ord_a_1001",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orders/ord_a_1001"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Apply discount",
+      "item": [
+        {
+          "name": "PARTNER15 on ord_a_1001 -> 200, discount 2999, total 17000",
+          "description": "",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/orders/ord_a_1001/apply-discount",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\": \"PARTNER15\"}"
+            }
+          }
+        },
+        {
+          "name": "Same code again -> 200 (idempotent)",
+          "description": "",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/orders/ord_a_1001/apply-discount",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\": \"PARTNER15\"}"
+            }
+          }
+        },
+        {
+          "name": "Different code on ord_a_1001 -> 409",
+          "description": "",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/orders/ord_a_1001/apply-discount",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\": \"WELCOME10\"}"
+            }
+          }
+        },
+        {
+          "name": "MEGA50 on ord_a_1002 -> 200, capped at 6000",
+          "description": "",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/orders/ord_a_1002/apply-discount",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\": \"MEGA50\"}"
+            }
+          }
+        },
+        {
+          "name": "LASTWEEK20 (expired) on ord_a_1004 -> 422",
+          "description": "",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/orders/ord_a_1004/apply-discount",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\": \"LASTWEEK20\"}"
+            }
+          }
+        },
+        {
+          "name": "Unknown code -> 422",
+          "description": "",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/orders/ord_a_1004/apply-discount",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\": \"NOPE\"}"
+            }
+          }
+        },
+        {
+          "name": "Unknown order -> 404",
+          "description": "",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/orders/ord_missing/apply-discount",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\": \"PARTNER15\"}"
+            }
+          }
+        },
+        {
+          "name": "Lower-case code works -> 200",
+          "description": "",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/orders/ord_a_1004/apply-discount",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\": \"welcome10\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Webhook",
+      "item": [
+        {
+          "name": "Full price after discount (webhook_2) -> 422, stays pending",
+          "description": "Gateway charged 19999 but the discounted total is 17000.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.unset('bad_sig'); pm.variables.unset('event'); // flags are per-request",
+                  "pm.variables.set('order_id','ord_a_1001'); pm.variables.set('amount_paise','19999'); pm.variables.set('payment_id','pay_a_7002');",
+                  "",
+                  "// Signs the EXACT body string that Postman sends ({{body}}) with HMAC-SHA256.",
+                  "const secret = pm.collectionVariables.get('secret');",
+                  "const payload = {",
+                  "  event: pm.variables.get('event') || 'payment.succeeded',",
+                  "  payment_id: pm.variables.get('payment_id'),",
+                  "  order_id: pm.variables.get('order_id'),",
+                  "  amount_paise: Number(pm.variables.get('amount_paise'))",
+                  "};",
+                  "const body = JSON.stringify(payload);",
+                  "pm.variables.set('body', body);",
+                  "pm.variables.set('sig', pm.variables.get('bad_sig') ? '0'.repeat(64) : CryptoJS.HmacSHA256(body, secret).toString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gateway-Signature",
+                "value": "{{sig}}"
+              }
+            ],
+            "url": "{{baseUrl}}/webhooks/payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{{body}}"
+            }
+          }
+        },
+        {
+          "name": "Correct discounted amount -> 200 applied",
+          "description": "",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.unset('bad_sig'); pm.variables.unset('event'); // flags are per-request",
+                  "pm.variables.set('order_id','ord_a_1001'); pm.variables.set('amount_paise','17000'); pm.variables.set('payment_id','pay_ok_1');",
+                  "",
+                  "// Signs the EXACT body string that Postman sends ({{body}}) with HMAC-SHA256.",
+                  "const secret = pm.collectionVariables.get('secret');",
+                  "const payload = {",
+                  "  event: pm.variables.get('event') || 'payment.succeeded',",
+                  "  payment_id: pm.variables.get('payment_id'),",
+                  "  order_id: pm.variables.get('order_id'),",
+                  "  amount_paise: Number(pm.variables.get('amount_paise'))",
+                  "};",
+                  "const body = JSON.stringify(payload);",
+                  "pm.variables.set('body', body);",
+                  "pm.variables.set('sig', pm.variables.get('bad_sig') ? '0'.repeat(64) : CryptoJS.HmacSHA256(body, secret).toString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gateway-Signature",
+                "value": "{{sig}}"
+              }
+            ],
+            "url": "{{baseUrl}}/webhooks/payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{{body}}"
+            }
+          }
+        },
+        {
+          "name": "ord_a_1003 first delivery -> 200 applied",
+          "description": "",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.unset('bad_sig'); pm.variables.unset('event'); // flags are per-request",
+                  "pm.variables.set('order_id','ord_a_1003'); pm.variables.set('amount_paise','89900'); pm.variables.set('payment_id','pay_a_7001');",
+                  "",
+                  "// Signs the EXACT body string that Postman sends ({{body}}) with HMAC-SHA256.",
+                  "const secret = pm.collectionVariables.get('secret');",
+                  "const payload = {",
+                  "  event: pm.variables.get('event') || 'payment.succeeded',",
+                  "  payment_id: pm.variables.get('payment_id'),",
+                  "  order_id: pm.variables.get('order_id'),",
+                  "  amount_paise: Number(pm.variables.get('amount_paise'))",
+                  "};",
+                  "const body = JSON.stringify(payload);",
+                  "pm.variables.set('body', body);",
+                  "pm.variables.set('sig', pm.variables.get('bad_sig') ? '0'.repeat(64) : CryptoJS.HmacSHA256(body, secret).toString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gateway-Signature",
+                "value": "{{sig}}"
+              }
+            ],
+            "url": "{{baseUrl}}/webhooks/payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{{body}}"
+            }
+          }
+        },
+        {
+          "name": "ord_a_1003 second delivery -> 200 duplicate",
+          "description": "Check the body says duplicate.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.unset('bad_sig'); pm.variables.unset('event'); // flags are per-request",
+                  "pm.variables.set('order_id','ord_a_1003'); pm.variables.set('amount_paise','89900'); pm.variables.set('payment_id','pay_a_7001');",
+                  "",
+                  "// Signs the EXACT body string that Postman sends ({{body}}) with HMAC-SHA256.",
+                  "const secret = pm.collectionVariables.get('secret');",
+                  "const payload = {",
+                  "  event: pm.variables.get('event') || 'payment.succeeded',",
+                  "  payment_id: pm.variables.get('payment_id'),",
+                  "  order_id: pm.variables.get('order_id'),",
+                  "  amount_paise: Number(pm.variables.get('amount_paise'))",
+                  "};",
+                  "const body = JSON.stringify(payload);",
+                  "pm.variables.set('body', body);",
+                  "pm.variables.set('sig', pm.variables.get('bad_sig') ? '0'.repeat(64) : CryptoJS.HmacSHA256(body, secret).toString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gateway-Signature",
+                "value": "{{sig}}"
+              }
+            ],
+            "url": "{{baseUrl}}/webhooks/payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{{body}}"
+            }
+          }
+        },
+        {
+          "name": "Different payment id on paid order -> 200 flagged",
+          "description": "",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.unset('bad_sig'); pm.variables.unset('event'); // flags are per-request",
+                  "pm.variables.set('order_id','ord_a_1003'); pm.variables.set('amount_paise','89900'); pm.variables.set('payment_id','pay_other');",
+                  "",
+                  "// Signs the EXACT body string that Postman sends ({{body}}) with HMAC-SHA256.",
+                  "const secret = pm.collectionVariables.get('secret');",
+                  "const payload = {",
+                  "  event: pm.variables.get('event') || 'payment.succeeded',",
+                  "  payment_id: pm.variables.get('payment_id'),",
+                  "  order_id: pm.variables.get('order_id'),",
+                  "  amount_paise: Number(pm.variables.get('amount_paise'))",
+                  "};",
+                  "const body = JSON.stringify(payload);",
+                  "pm.variables.set('body', body);",
+                  "pm.variables.set('sig', pm.variables.get('bad_sig') ? '0'.repeat(64) : CryptoJS.HmacSHA256(body, secret).toString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gateway-Signature",
+                "value": "{{sig}}"
+              }
+            ],
+            "url": "{{baseUrl}}/webhooks/payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{{body}}"
+            }
+          }
+        },
+        {
+          "name": "Bad signature -> 401",
+          "description": "",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.unset('bad_sig'); pm.variables.unset('event'); // flags are per-request",
+                  "pm.variables.set('order_id','ord_a_1004'); pm.variables.set('amount_paise','19999'); pm.variables.set('payment_id','pay_x');",
+                  "pm.variables.set('bad_sig','1');",
+                  "// Signs the EXACT body string that Postman sends ({{body}}) with HMAC-SHA256.",
+                  "const secret = pm.collectionVariables.get('secret');",
+                  "const payload = {",
+                  "  event: pm.variables.get('event') || 'payment.succeeded',",
+                  "  payment_id: pm.variables.get('payment_id'),",
+                  "  order_id: pm.variables.get('order_id'),",
+                  "  amount_paise: Number(pm.variables.get('amount_paise'))",
+                  "};",
+                  "const body = JSON.stringify(payload);",
+                  "pm.variables.set('body', body);",
+                  "pm.variables.set('sig', pm.variables.get('bad_sig') ? '0'.repeat(64) : CryptoJS.HmacSHA256(body, secret).toString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gateway-Signature",
+                "value": "{{sig}}"
+              }
+            ],
+            "url": "{{baseUrl}}/webhooks/payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{{body}}"
+            }
+          }
+        },
+        {
+          "name": "Unknown order -> 404",
+          "description": "",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.unset('bad_sig'); pm.variables.unset('event'); // flags are per-request",
+                  "pm.variables.set('order_id','ord_nope'); pm.variables.set('amount_paise','100'); pm.variables.set('payment_id','pay_y');",
+                  "",
+                  "// Signs the EXACT body string that Postman sends ({{body}}) with HMAC-SHA256.",
+                  "const secret = pm.collectionVariables.get('secret');",
+                  "const payload = {",
+                  "  event: pm.variables.get('event') || 'payment.succeeded',",
+                  "  payment_id: pm.variables.get('payment_id'),",
+                  "  order_id: pm.variables.get('order_id'),",
+                  "  amount_paise: Number(pm.variables.get('amount_paise'))",
+                  "};",
+                  "const body = JSON.stringify(payload);",
+                  "pm.variables.set('body', body);",
+                  "pm.variables.set('sig', pm.variables.get('bad_sig') ? '0'.repeat(64) : CryptoJS.HmacSHA256(body, secret).toString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gateway-Signature",
+                "value": "{{sig}}"
+              }
+            ],
+            "url": "{{baseUrl}}/webhooks/payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{{body}}"
+            }
+          }
+        },
+        {
+          "name": "Non-payment event -> 200 ignored",
+          "description": "",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.unset('bad_sig'); pm.variables.unset('event'); // flags are per-request",
+                  "pm.variables.set('order_id','ord_a_1004'); pm.variables.set('amount_paise','19999'); pm.variables.set('payment_id','pay_z');",
+                  "pm.variables.set('event','payment.failed');",
+                  "// Signs the EXACT body string that Postman sends ({{body}}) with HMAC-SHA256.",
+                  "const secret = pm.collectionVariables.get('secret');",
+                  "const payload = {",
+                  "  event: pm.variables.get('event') || 'payment.succeeded',",
+                  "  payment_id: pm.variables.get('payment_id'),",
+                  "  order_id: pm.variables.get('order_id'),",
+                  "  amount_paise: Number(pm.variables.get('amount_paise'))",
+                  "};",
+                  "const body = JSON.stringify(payload);",
+                  "pm.variables.set('body', body);",
+                  "pm.variables.set('sig', pm.variables.get('bad_sig') ? '0'.repeat(64) : CryptoJS.HmacSHA256(body, secret).toString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gateway-Signature",
+                "value": "{{sig}}"
+              }
+            ],
+            "url": "{{baseUrl}}/webhooks/payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{{body}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Verify",
+      "item": [
+        {
+          "name": "ord_a_1001 should be paid",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orders/ord_a_1001"
+          }
+        },
+        {
+          "name": "ord_a_1003 should be paid",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orders/ord_a_1003"
+          }
+        }
+      ]
+    }
+  ]
+}
