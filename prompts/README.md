@@ -41,6 +41,10 @@ at which port frontend is running , 3000 is not working at all
 
 make sure to keep the same prompt i wrote in the prompt readme file properly
 
+## Prompt 5
+
+The concurrency tests run on mongomock, which serializes operations. I have not run against the docker replica set (make test-mongo), so the atomicity claims rest on Mongo's single-document update semantics, not on a test of real contention. , you havve written this in notes.md , i am running docker desktop. docker desktop is opened
+
 ---
 
 ## What the AI did in response (short summary)
@@ -52,3 +56,4 @@ make sure to keep the same prompt i wrote in the prompt readme file properly
 5. Wrote NOTES.md.
 6. For prompt 2: started a local replica-set Mongo, ran the full Python suite against it (61 passed), ran the API and the Vite frontend, added `scripts/send_webhook.py` and a Postman collection (checked with Newman, 21 requests, 16 assertions, 0 failed), and added demo options to the client's `main.tsx`.
 7. For prompt 3: the Vite dev server runs on port 5173, not 3000.
+8. For prompt 5: ran the full suite against the docker compose replica set (61 passed), repeated the two concurrency tests 40 times (0 failures), and updated NOTES.md to say exactly that.

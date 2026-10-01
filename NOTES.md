@@ -2,7 +2,7 @@
 
 ## Choices
 - **Client:** React (`client/web/`). `formatPaise` uses BigInt, so every step is exact integer maths. Negative input is formatted with a leading `-` instead of throwing. Non-integers, NaN, Infinity and unsafe integers throw.
-- **Transactions:** not used. Every state change is one conditional `update_one`, so `make test` (mongomock) is enough. I did not run against a real replica set (see "Would not yet trust").
+- **Transactions:** not used. Every state change is one conditional `update_one`, so no replica set is needed for correctness. The suite passes on mongomock (`make test`) and on the docker compose replica set (61 passed).
 - **Rounding:**
   - The discount is `subtotal * bps // 10000`, rounded down to a paisa, then capped by `cap_paise` (and never above the subtotal).
   - The partner share is `discount * partner_bps // 10000`, rounded down. RAYY's share is the remainder, so the two always sum to the discount exactly.
@@ -32,7 +32,7 @@
 - Related: my first concurrency test for "two codes at once" still passed after I deleted the `discount: None` guard. mongomock runs the calls serially, and the service's read-then-check caught it. I added `test_repository_guard_blocks_second_discount_even_if_service_raced` and confirmed it fails when the guard is removed. The `webhook_2` amount guard was checked the same way.
 
 ## Would not yet trust in production
-- The concurrency tests run on mongomock, which serializes operations. I have not run against the docker replica set (`make test-mongo`), so the atomicity claims rest on Mongo's single-document update semantics, not on a test of real contention.
+- Concurrency: on mongomock the concurrency tests prove little, because it serializes operations. I also ran the whole suite against the docker compose replica set (`docker compose run ... pytest`, 61 passed) and repeated the two concurrency tests (two codes at once, five simultaneous duplicate webhooks) 40 times with 0 failures. That is one single-node replica set and one Python process using asyncio. It is not multi-process or multi-node contention, so that is still untested.
 - The webhook has no timestamp or replay window; the documented payload has none. An old captured, validly signed event is replayable, though the idempotency above limits the damage.
 - `payment_anomalies` is only a note on the order. Nothing alerts anyone, and there is no refund flow for the mismatch or double-payment cases.
 - Discount codes are read from a JSON file cached for the process (`lru_cache`), so expiry is computed relative to process start. That is the starter's design; production should store codes in a database with absolute expiry.
